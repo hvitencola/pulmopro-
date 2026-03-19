@@ -2,32 +2,25 @@
 <html lang="mn">
 <head>
 <meta charset="UTF-8">
-<title>💌 Anonymous Flower Letter</title>
+<title>💐 Admin Flower Letters</title>
 <style>
-body { font-family: 'Poppins', sans-serif; background: #ffeef2; text-align:center; padding:20px;}
-.box { background:white; padding:20px; margin:20px auto; width:320px; border-radius:15px; box-shadow:0 0 10px gray;}
-input, select, textarea { width:90%; padding:10px; margin:10px 0; border-radius:10px; border:1px solid #ddd; font-size:16px; }
-button { padding:12px 20px; background:pink; border:none; border-radius:10px; cursor:pointer; font-size:16px;}
-button:hover { background:#ff6b81; }
+body { font-family:'Poppins',sans-serif; background:#ffeef2 url('https://source.unsplash.com/1080x1920/?flowers') no-repeat center center; background-size:cover; padding:20px; text-align:center;}
+h2 { color:#FF6B81; text-shadow:1px 1px 3px #fff;}
+.card { background: linear-gradient(135deg,#FFD6E8,#FFFBCC); border-radius:20px; padding:20px; margin:15px auto; width:90%; max-width:400px; box-shadow:0 5px 15px rgba(0,0,0,0.2); text-align:left; position:relative; font-size:16px;}
+.card i { position:absolute; top:15px; right:15px; color:#FF6B81; font-size:24px;}
+.download-btn { background:#1E90FF; color:white; margin-top:10px; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+.download-btn:hover { background:#0d6efd;}
 </style>
 </head>
 <body>
 
-<div class="box">
-<h2>💐 Anonymous Flower Letter</h2>
-<input type="text" id="sender" placeholder="Хэнээс ирж байна вэ?">
-<input type="text" id="receiver" placeholder="Хэнд илгээх вэ?">
-<select id="flower">
-<option>🌹 Rose</option>
-<option>🌸 Sakura</option>
-<option>💐 Bouquet</option>
-</select>
-<textarea id="message" placeholder="Захиа бичнэ үү..." rows="4"></textarea>
-<button onclick="sendMessage()">Send 💌</button>
-</div>
+<h2>💐 All Flower Letters (Admin)</h2>
+<div id="cardsContainer"></div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
 
 <script>
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -43,27 +36,37 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 var db = firebase.firestore();
 
-function sendMessage(){
-  var sender=document.getElementById("sender").value.trim();
-  var receiver=document.getElementById("receiver").value.trim();
-  var flower=document.getElementById("flower").value;
-  var message=document.getElementById("message").value.trim();
+const container = document.getElementById('cardsContainer');
 
-  if(!sender || !receiver || !message) return alert("Бүх талбаруудыг бөглөнө үү!");
+db.collection("letters").orderBy("time","desc").onSnapshot(snapshot=>{
+  container.innerHTML='';
+  snapshot.forEach(doc=>{
+    const data = doc.data();
+    const card = document.createElement('div');
+    card.className='card';
+    card.innerHTML=`
+      <i class="fa fa-heart"></i>
+      <p><strong>Хэнд:</strong> ${data.receiver}</p>
+      <p><strong>Хэнээс:</strong> ${data.sender}</p>
+      <p><strong>Цэцэг:</strong> ${data.flower}</p>
+      <p>${data.message}</p>
+      <small>${data.time.toDate().toLocaleString()}</small>
+    `;
 
-  db.collection("letters").add({
-    sender: sender,
-    receiver: receiver,
-    flower: flower,
-    message: message,
-    time: new Date()
+    const downloadBtn=document.createElement('button');
+    downloadBtn.textContent="PNG татах";
+    downloadBtn.className='download-btn';
+    downloadBtn.onclick=()=>html2canvas(card).then(canvas=>{
+      const link=document.createElement('a');
+      link.download='flower_letter.png';
+      link.href=canvas.toDataURL();
+      link.click();
+    });
+
+    card.appendChild(downloadBtn);
+    container.appendChild(card);
   });
-
-  alert("💌 Илгээгдлээ!");
-  document.getElementById("sender").value='';
-  document.getElementById("receiver").value='';
-  document.getElementById("message").value='';
-}
+});
 </script>
 
 </body>
